@@ -1,0 +1,47 @@
+function init(self)
+	collectgarbage('stop')
+	local filename = sys.get_save_file("defold-vsync-dt-diff", "diffs.csv")
+	file = io.open(filename, 'w+')
+	print(filename)
+	print('fixed updates:')
+	print('frame index, frames since last mismatch, number of fixed_update calls')
+end
+
+function final(self)
+	file:flush()
+	file:close()
+end
+
+local frame_counter = 0
+local frame_diff = 1
+local fixed_frame_counter = 0
+local fixed_frame_diff = 1
+
+function update(self, dt)
+	frame_counter = frame_counter + 1
+
+	local diff = dt - 1/60
+	if diff > 0.000000001 or diff < -0.000000001 then -- ignore float precision errors (?)
+		file:write(frame_counter)
+		file:write(',')
+		file:write(frame_diff)
+		file:write(',')
+		file:write(diff)
+		file:write('\n')
+		frame_diff = 1
+	else
+		frame_diff = frame_diff + 1
+	end
+
+	if fixed_frame_counter ~= 1 then
+		print(frame_counter, fixed_frame_diff, fixed_frame_counter)
+		fixed_frame_diff = 1
+	else
+		fixed_frame_diff = fixed_frame_diff + 1
+	end
+	fixed_frame_counter = 0
+end
+
+function fixed_update(self, dt)
+	fixed_frame_counter = fixed_frame_counter + 1
+end
